@@ -1,105 +1,69 @@
 #! /usr/bin/env node
 
-var program = require('commander')
-  , utils = require('./utils')
-  , package = require('./package.json');
+var program = require('commander'),
+  YAML = require('yaml'),
+  marked = require('marked'),
+  utils = require('./utils'),
+  package = require('./package.json');
 
 program
   .version(package.version)
   .description(package.description)
   .usage('[options] <medium post url>')
-  .option('-H, --headers', 'Add headers at the beginning of the markdown file with metadata')
-  .option('-S, --separator <separator>', 'Separator between headers and body','')
-  .option('-I, --info', 'Show information about the medium post')
-  .option('-d, --debug', 'Show debugging info')
-  .on('--help', function(){
-    console.log('  Examples:');
-    console.log('');
-    console.log('    $ mediumexporter https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e > medium_post.md');
-    console.log('    $ mediumexporter --headers --separator --- https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e > medium_post.md');
-    console.log('    $ mediumexporter mediumpost.json');
-    console.log('');
-  });
+  .option('-f, --frontmatter', 'output post information as frontmatter')
+  .option('-H, --html', 'output as html');
 
 program.parse(process.argv);
 const url = program.args[0];
-url && m2md(program.args[0], program).then(o => console.log(o));;
+url && m2md(url, program).then(o => console.log(o));;
 
-function m2md(url, options={info: 1, headers: 1, separator: '', debug:0}) {
+function m2md(url, options={frontmatter: 0, html: 0}) {
 
-  var mediumURL = url;
+  const mediumURL = url;
 
   return utils.loadMediumPost(mediumURL, async function(err, json) {
+    const payload = json.payload.value;
+    const markdown = [];
 
-    var s = json.payload.value;
-    var story = {};
-
-    story.title = s.title;
-    story.date = new Date(s.createdAt);
-    story.url = s.canonicalUrl;
-    story.language = s.detectedLanguage;
-    story.license = s.license;
-
-    if(program.info) {
-      console.log(story);
-      process.exit(0);
+    if(options.frontmatter) {
+      const doc = new YAML.Document();
+      doc.contents = payload;
+      markdown.push('---', doc.toString(), '---');
     }
 
-    if(program.headers) {
-      console.log("url: "+story.url);
-      console.log("date: "+story.date);
-      console.log(program.separator);
-    }
-
-    story.sections = s.content.bodyModel.sections;
-    story.paragraphs = s.content.bodyModel.paragraphs;
+    const story = payload.content.bodyModel;
 
     var sections = [];
-    for(var i=0;i<story.sections.length;i++) {
-      var s = story.sections[i];
-      var section = utils.processSection(s);
+    for(let i=0;i<story.sections.length;i++) {
+      const s = story.sections[i];
+      const section = utils.processSection(s);
       sections[s.startIndex] = section;
     }
 
-    if(story.paragraphs.length > 1) {
-      story.subtitle = story.paragraphs[1].text;
+    markdown.push("\n# "+payload.title.replace(/\n/g,'\n# '));
+    if (payload.content.subtitle) {
+      markdown.push("\n"+payload.content.subtitle.replace(/#+/,''));
     }
-
-    story.markdown = [];
-    story.markdown.push("\n# "+story.title.replace(/\n/g,'\n# '));
-    if (undefined != story.subtitle) {
-      story.markdown.push("\n"+story.subtitle.replace(/#+/,''));
-    }
-
-    var promises = [];
 
     for(var i=2;i<story.paragraphs.length;i++) {
       
-      if(sections[i]) story.markdown.push(sections[i]);
+      if(sections[i]) {
+        markdown.push(sections[i]);
+      }
 
-      var promise = new Promise(function (resolve, reject) {
-        var p = story.paragraphs[i];
-        utils.processParagraph(p, function(err, text) {
-          // Avoid double title/subtitle
-          if(text != story.markdown[i])
-            return resolve(text);
-          else
-            return resolve();
-        });
+      var p = story.paragraphs[i];
+      const result = utils.processParagraph(p, function(err, text) {
+        return text == markdown[i] ? undefined: text; // Avoid double title/subtitle
       });
-      promises.push(promise);
+      markdown.push(result);
     }
 
-    const results = await Promise.all(promises);
-    results.map(text => {
-      story.markdown.push(text);
-    })
-
-    if (program.debug) {
-      console.log("debug", story.paragraphs);
-    }
-
-    return story.markdown.join('\n');
+    let output = markdown.join('\n');
+    if (options.html) {
+      output = output.replace(/^---($.*^)---$/ms, '');
+      output = marked(output); 
+    } 
+    return output;
   });
 }
 

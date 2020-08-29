@@ -132,9 +132,6 @@ var utils = {
         case 2: // italic
           utils.addMarkup(markups_array, "*","*",m.start,m.end);
           break;
-        // case 3: // anchor tag
-        //   utils.addMarkup(markups_array, "[", "]("+m.href+")", m.start, m.end);
-        //   break;
         case 3: // anchor tag
           if (m.userId) {
             const user = mentionedUsers.find(u => u.userId === m.userId)

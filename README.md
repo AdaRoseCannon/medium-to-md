@@ -1,6 +1,12 @@
 # Medium To Markdown
 Export your medium article to markdown
 
+This is a fork of https://github.com/xdamman/mediumexporter, enhanced with;
+* Enabled Javascript usage
+* Support synchrous call
+* Added html export
+* Simplified options
+
 ## Installation
 
 npm install medium-to-md -D

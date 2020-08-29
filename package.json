@@ -6,7 +6,9 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "commander": "^2.8.1",
-    "request": "^2.60.0"
+    "marked": "^1.1.1",
+    "request": "^2.60.0",
+    "yaml": "^1.10.0"
   },
   "devDependencies": {
     "chai": "^3.2.0",
@@ -28,7 +30,7 @@
   "license": "MIT",
   "preferGlobal": true,
   "bin": {
-    "mediumexporter": "index.js"
+    "med2md": "index.js"
   },
   "bugs": {
     "url": "https://github.com/xdamman/mediumexporter/issues"
