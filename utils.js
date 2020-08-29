@@ -3,20 +3,19 @@ var request = require('request');
 var MEDIUM_IMG_CDN = "https://cdn-images-1.medium.com/max/";
 
 var utils = {
-  loadMediumPost: function(mediumURL, cb) {
-    if(mediumURL.match(/^http/i)) {
-      mediumURL = mediumURL.replace(/#.+$/, '');
-      request(mediumURL+"?format=json", function(err, res, body) {
-        if(err) return cb(err);
-        var json_string = body.substr(body.indexOf('{'));
-        var json = JSON.parse(json_string);
-        return cb(null, json);
-      });
-    }
-    else {
-      json = require(process.cwd() + "/" + mediumURL);
-      return cb(null, json);
-    }
+  loadMediumPost: async function(mediumURL, cb) {
+    const result = await new Promise(resolve => {
+      if(mediumURL.match(/^http/i)) {
+        mediumURL = mediumURL.replace(/#.+$/, '');
+        request(mediumURL+"?format=json", function(err, res, body) {
+          if(err) return cb(err);
+          var json_string = body.substr(body.indexOf('{'));
+          var json = JSON.parse(json_string);
+          resolve(cb(null, json));
+        });
+      }
+    });
+    return result;
   },
   processSection: function(s) {
     var section = "";
@@ -133,9 +132,36 @@ var utils = {
         case 2: // italic
           utils.addMarkup(markups_array, "*","*",m.start,m.end);
           break;
+        // case 3: // anchor tag
+        //   utils.addMarkup(markups_array, "[", "]("+m.href+")", m.start, m.end);
+        //   break;
         case 3: // anchor tag
-          utils.addMarkup(markups_array, "[", "]("+m.href+")", m.start, m.end);
-          break;
+          if (m.userId) {
+            const user = mentionedUsers.find(u => u.userId === m.userId)
+            if (user.twitterScreenName) {
+              utils.addMarkup(
+                markups_array,
+                `[`,
+                `](https://twitter.com/${user.twitterScreenName})`,
+                m.start,
+                m.end
+              )
+            } else {
+              utils.addMarkup(
+                markups_array,
+                `[`,
+                `](https://medium.com/@${user.username})`,
+                m.start,
+                m.end
+              )
+            }
+          } else {
+            utils.addMarkup(markups_array, '[', '](' + m.href + ')', m.start, m.end)
+          }
+          break
+        case 10: // code
+          utils.addMarkup(markups_array, '`', '`', m.start, m.end)
+          break
         default:
           console.error("Unknown markup type "+m.type, m);
           break;

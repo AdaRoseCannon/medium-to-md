@@ -1,40 +1,35 @@
 #! /usr/bin/env node
 
-if (require.main !== module) {
-  module.exports = {
-    getFeed: require('./lib/get-feed'),
-    getPost: require('./lib/get-post')
-  }
-} else {
+var program = require('commander')
+  , utils = require('./utils')
+  , package = require('./package.json');
 
-  var program = require('commander')
-    , utils = require('./utils')
-    , package = require('./package.json')
-    , Promise = require('bluebird')
-    ;
+program
+  .version(package.version)
+  .description(package.description)
+  .usage('[options] <medium post url>')
+  .option('-H, --headers', 'Add headers at the beginning of the markdown file with metadata')
+  .option('-S, --separator <separator>', 'Separator between headers and body','')
+  .option('-I, --info', 'Show information about the medium post')
+  .option('-d, --debug', 'Show debugging info')
+  .on('--help', function(){
+    console.log('  Examples:');
+    console.log('');
+    console.log('    $ mediumexporter https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e > medium_post.md');
+    console.log('    $ mediumexporter --headers --separator --- https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e > medium_post.md');
+    console.log('    $ mediumexporter mediumpost.json');
+    console.log('');
+  });
 
-  program
-    .version(package.version)
-    .description(package.description)
-    .usage('[options] <medium post url>')
-    .option('-H, --headers', 'Add headers at the beginning of the markdown file with metadata')
-    .option('-S, --separator <separator>', 'Separator between headers and body','')
-    .option('-I, --info', 'Show information about the medium post')
-    .option('-d, --debug', 'Show debugging info')
-    .on('--help', function(){
-      console.log('  Examples:');
-      console.log('');
-      console.log('    $ mediumexporter https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e > medium_post.md');
-      console.log('    $ mediumexporter --headers --separator --- https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e > medium_post.md');
-      console.log('    $ mediumexporter mediumpost.json');
-      console.log('');
-    });
+program.parse(process.argv);
+const url = program.args[0];
+url && m2md(program.args[0], program).then(o => console.log(o));;
 
-  program.parse(process.argv);
+function m2md(url, options={info: 1, headers: 1, separator: '', debug:0}) {
 
-  var mediumURL = program.args[0];
+  var mediumURL = url;
 
-  utils.loadMediumPost(mediumURL, function(err, json) {
+  return utils.loadMediumPost(mediumURL, async function(err, json) {
 
     var s = json.payload.value;
     var story = {};
@@ -95,16 +90,17 @@ if (require.main !== module) {
       promises.push(promise);
     }
 
-    Promise.all(promises).then((results) => {
-      results.map(text => {
-        story.markdown.push(text);
-      })
+    const results = await Promise.all(promises);
+    results.map(text => {
+      story.markdown.push(text);
+    })
 
-      if (program.debug) {
-        console.log("debug", story.paragraphs);
-      }
-      console.log(story.markdown.join('\n'));
-    });
+    if (program.debug) {
+      console.log("debug", story.paragraphs);
+    }
 
+    return story.markdown.join('\n');
   });
 }
+
+module.exports = m2md;

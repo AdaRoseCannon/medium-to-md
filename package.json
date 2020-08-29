@@ -1,11 +1,8 @@
 {
   "name": "medium-to-md",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Export posts from medium.com to markdown",
   "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
   "dependencies": {
     "bluebird": "^3.5.0",
     "commander": "^2.8.1",

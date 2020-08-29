@@ -1,22 +1,20 @@
-# Medium Exporter
-Export your stories published on medium.com to markdown.
-
-## Why?
-
-I really enjoy using [Medium](https://medium.com) to publish a few posts every now and then. But I also want to have a copy on my own blog which is using markdown.
-
-## Contributions
-
-I welcome contributions to make it work with other export formats that could be easily imported in other blogging engines.
+# Medium To Markdown
+Export your medium article to markdown
 
 ## Installation
 
-    npm install -g mediumexporter
+npm install medium-to-md -D
     
 ## Usage
 
-    $> mediumexporter https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e > medium_post.md
+Command Line
+```
+$ npx med2md https://medium.com/@xdamman/my-10-day-meditation-retreat-in-silence-71abda54940e
+```
 
-To have a complete list of options:
-
-    $> mediumexporter -h
+In Js
+```
+const med2md = require('./index.js');
+med2Md('https://medium.com/@allenhwkim/angular-syntax-highlighted-code-with-prism-4b9fce7364dd')
+  .then(o => console.log(o));
+```
