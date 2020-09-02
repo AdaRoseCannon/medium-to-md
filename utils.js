@@ -3,16 +3,18 @@ var request = require('request');
 var MEDIUM_IMG_CDN = "https://cdn-images-1.medium.com/max/";
 
 var utils = {
-  loadMediumPost: async function(mediumURL, cb) {
-    const result = await new Promise(resolve => {
-      if(mediumURL.match(/^http/i)) {
+  loadMediumJson: async function(mediumURL) {
+    return new Promise(resolve => {
+      if (mediumURL.match(/^http/i)) {
         mediumURL = mediumURL.replace(/#.+$/, '');
         request(mediumURL+"?format=json", function(err, res, body) {
           if(err) return cb(err);
           var json_string = body.substr(body.indexOf('{'));
           var json = JSON.parse(json_string);
-          resolve(cb(null, json));
+          resolve(json);
         });
+      } else {
+        reject('Invalid url');
       }
     });
     return result;
