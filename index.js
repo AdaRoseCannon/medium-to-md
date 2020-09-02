@@ -17,9 +17,9 @@ const url = program.args[0];
 if (url) {
   med2md(url).then(o => {
     if (program.output) {
-      console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXX', o[program.output]);  
+      console.log(o[program.output]);  
     } else {
-      console.log('XXXXXXXXXXXXXXXXXXXXXXXXXx', o);
+      console.log(o);
     }
   });
 }
@@ -28,14 +28,12 @@ async function med2md(url) {
 
   const mediumURL = url;
   const json = await utils.loadMediumJson(mediumURL);
-console.log({json});
 
   if (!json.success) {
     return json; 
   }
 
   const payload = json.payload.value;
-console.log({payload});
   const markdown = [];
 
   const story = payload.content.bodyModel;
