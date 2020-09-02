@@ -10,26 +10,29 @@ program
   .version(package.version)
   .description(package.description)
   .usage('[options] <medium post url>')
-  .option('-f, --frontmatter', 'output post information as frontmatter')
-  .option('-H, --html', 'output as html');
+  .option('-o, --output <type>', 'output type. markdown, json, or html', 'markdown');
 
 program.parse(process.argv);
 const url = program.args[0];
-url && m2md(url, program).then(o => console.log(o));;
+url && m2md(url, program).then(o => {
+  if (program.output) {
+    console.log(o[program.output]);  
+  } else {
+    console.log(o);
+  }
+});
 
-function m2md(url, options={frontmatter: 0, html: 0}) {
+function m2md(url, options={html: 0}) {
 
   const mediumURL = url;
 
   return utils.loadMediumPost(mediumURL, async function(err, json) {
+    if (!json.success) {
+      return json; 
+    }
+
     const payload = json.payload.value;
     const markdown = [];
-
-    if(options.frontmatter) {
-      const doc = new YAML.Document();
-      doc.contents = payload;
-      markdown.push('---', doc.toString(), '---');
-    }
 
     const story = payload.content.bodyModel;
 
@@ -58,12 +61,9 @@ function m2md(url, options={frontmatter: 0, html: 0}) {
       markdown.push(result);
     }
 
-    let output = markdown.join('\n');
-    if (options.html) {
-      output = output.replace(/^---($.*^)---$/ms, '');
-      output = marked(output); 
-    } 
-    return output;
+    const html = marked( markdown.join('\n') );
+
+    return { markdown: markdown.join('\n'), html, json };
   });
 }
 
