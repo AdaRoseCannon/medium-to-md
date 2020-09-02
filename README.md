@@ -25,7 +25,7 @@ In Js
 ```
 const fs = require('fs');
 const med2md = require('./index.js');
-med2Md('https://medium.com/@allenhwkim/angular-syntax-highlighted-code-with-prism-4b9fce7364dd')
+med2md('https://medium.com/@allenhwkim/angular-syntax-highlighted-code-with-prism-4b9fce7364dd')
   .then(result => {
     console.log('html', result.html);
     console.log('json', result.json);
