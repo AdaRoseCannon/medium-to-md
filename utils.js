@@ -9,8 +9,11 @@ var utils = {
         mediumURL = mediumURL.replace(/#.+$/, '');
         request(mediumURL+"?format=json", function(err, res, body) {
           if(err) return cb(err);
-          var json_string = body.substr(body.indexOf('{'));
-          var json = JSON.parse(json_string);
+          
+          const begin = body.indexOf('{');
+          const end = body.indexOf('</script>', begin);
+          const json_string = end === -1 ? body.substr(begin) : body.substr(begin, end-begin);
+          const json = JSON.parse(json_string); 
           resolve(json);
         });
       } else {
